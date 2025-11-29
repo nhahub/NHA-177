@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Inputs - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="../css/inputs.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="../images/logo.png" alt="Neuro Fit AI Trainer Logo" class="logo-img">
+            <div class="logo-text">NEURO FIT AI TRAINER</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="homePage.html">Home</a></li>
+            <li><a href="inputs.html" class="active">Start</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Form Section -->
+    <section class="form-container">
+        <h1>Enter Your Fitness Information</h1>
+        <p class="subtitle">Fill in your details to get personalized fitness predictions</p>
+
+        <form id="fitnessForm" class="fitness-form">
+            <!-- Age -->
+            <div class="form-group">
+                <label for="age">Age (years)</label>
+                <input type="number" id="age" name="age" min="1" max="120" required>
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                </select>
+            </div>
+
+            <!-- Weight -->
+            <div class="form-group">
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" step="0.1" min="1" max="500" required>
+            </div>
+
+            <!-- Height -->
+            <div class="form-group">
+                <label for="height">Height (m)</label>
+                <input type="number" id="height" name="height" step="0.01" min="0.5" max="3" required>
+            </div>
+
+            <!-- BMI (Auto-calculated) -->
+            <div class="form-group">
+                <label for="bmi">BMI (Body Mass Index)</label>
+                <input type="number" id="bmi" name="bmi" step="0.01" readonly>
+                <small class="hint">Calculated automatically from Weight / (Height²)</small>
+            </div>
+
+            <!-- Fat Percentage -->
+            <div class="form-group">
+                <label for="fatPercent">Fat % (Body fat percentage)</label>
+                <input type="number" id="fatPercent" name="fatPercent" step="0.1" min="0" max="100" required>
+            </div>
+
+            <!-- Workout Frequency -->
+            <div class="form-group">
+                <label for="workoutFrequency">Workout Frequency (days per week)</label>
+                <input type="number" id="workoutFrequency" name="workoutFrequency" min="0" max="7" required>
+            </div>
+            
+            <!-- Goal Label -->
+            <div class="form-group">
+                <label for="goalLabel">Fitness Goal</label>
+                <select id="goalLabel" name="goalLabel" required>
+                    <option value="">Select Goal</option>
+                    <option value="Maintain">Maintain</option>
+                    <option value="Muscle Gain">Muscle Gain</option>
+                    <option value="Weight Loss">Weight Loss</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn-option btn-results" onclick="submitToResults()">
+                    <span class="btn-icon">📊</span>
+                    <span>View Diet Prediction</span>
+                </button>
+                <button type="button" class="btn-option btn-dashboard" onclick="submitToDashboard()">
+                    <span class="btn-icon">📈</span>
+                    <span>View Nutrition Dashboard</span>
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <script>
+        // Auto-calculate BMI when weight or height changes
+        const weightInput = document.getElementById('weight');
+        const heightInput = document.getElementById('height');
+        const bmiInput = document.getElementById('bmi');
+
+        function calculateBMI() {
+            const weight = parseFloat(weightInput.value);
+            const height = parseFloat(heightInput.value);
+            
+            if (weight && height && height > 0) {
+                const bmi = weight / (height * height);
+                bmiInput.value = bmi.toFixed(2);
+            } else {
+                bmiInput.value = '';
+            }
+        }
+
+        weightInput.addEventListener('input', calculateBMI);
+        heightInput.addEventListener('input', calculateBMI);
+
+        // Collect and validate form data
+        function collectFormData() {
+            // Validate form
+            const form = document.getElementById('fitnessForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return null;
+            }
+
+            return {
+                age: parseFloat(document.getElementById('age').value),
+                gender: document.getElementById('gender').value,
+                weight: parseFloat(document.getElementById('weight').value),
+                height: parseFloat(document.getElementById('height').value),
+                bmi: parseFloat(document.getElementById('bmi').value),
+                fatPercent: parseFloat(document.getElementById('fatPercent').value),
+                workoutFrequency: parseInt(document.getElementById('workoutFrequency').value),
+                goalLabel: document.getElementById('goalLabel').value
+            };
+        }
+
+        // Submit to Results Page
+        async function submitToResults() {
+            const formData = collectFormData();
+            if (!formData) return;
+
+            // Store form data in sessionStorage
+            sessionStorage.setItem('fitnessFormData', JSON.stringify(formData));
+
+            try {
+                // Call backend API for diet type prediction
+                const API_URL = 'http://localhost:5000/api/predict-diet-type';
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const dietType = result.success ? result.dietType : predictDietType(formData);
+                
+                // Redirect to results page with diet type
+                window.location.href = `result.html?dietType=${encodeURIComponent(dietType)}`;
+            } catch (error) {
+                console.error('Error predicting diet type:', error);
+                // Fallback to client-side prediction if API fails
+                const dietType = predictDietType(formData);
+                window.location.href = `result.html?dietType=${encodeURIComponent(dietType)}`;
+            }
+        }
+
+        // Submit to Dashboard Page
+        function submitToDashboard() {
+            const formData = collectFormData();
+            if (!formData) return;
+
+            // Store form data in sessionStorage
+            sessionStorage.setItem('fitnessFormData', JSON.stringify(formData));
+            
+            // Redirect to dashboard page
+            window.location.href = `dashboard.html`;
+        }
+
+        // Placeholder prediction function (replace with backend API call)
+        function predictDietType(formData) {
+            const goal = formData.goalLabel;
+            const workoutFreq = formData.workoutFrequency;
+            const bmi = formData.bmi;
+            
+            // Simple rule-based prediction (replace with actual model prediction)
+            if (goal === 'Muscle Gain' || workoutFreq >= 4) {
+                return 'High-Protein';
+            } else if (goal === 'Weight Loss' || (bmi > 25 && bmi < 30)) {
+                return 'Low-Carb';
+            } else {
+                return 'Balanced';
+            }
+            
+            // TODO: Replace above with actual API call:
+            // const response = await fetch('/api/predict', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(formData)
+            // });
+            // const result = await response.json();
+            // return result.dietType;
+        }
+    </script>
+
+</body>
+</html>
+

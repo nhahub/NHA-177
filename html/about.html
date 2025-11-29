@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="../css/about.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="../images/logo.png" alt="Neuro Fit AI Trainer Logo" class="logo-img">
+            <div class="logo-text">NEURO FIT AI TRAINER</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="homePage.html">Home</a></li>
+            <li><a href="inputs.html">Start</a></li>
+            <li><a href="about.html" class="active">About</a></li>
+        </ul>
+    </nav>
+
+    <!-- About Container -->
+    <section class="about-container">
+        <h1>About AI Fitness Trainer</h1>
+        <p class="subtitle">Your Smart Health & Fitness Prediction Assistant</p>
+
+        <!-- Project Overview -->
+        <div class="content-section">
+            <h2>Project Overview</h2>
+            <p>
+                AI Fitness Trainer provides personalized fitness and nutrition recommendations using your input data. The platform calculates daily nutrients (calories, protein, carbs, fats) and predicts the optimal diet type with a machine learning model loaded at startup (diet_model.pkl), exposed via a CORS-enabled Flask API.
+            </p>
+        </div>
+
+        <!-- Features -->
+        <div class="content-section">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>ML Diet Prediction</h3>
+                    <p>Predicts Balanced, High-Protein, or Low-Carb using a trained model (<code>diet_model.pkl</code>) via <code>/api/predict-diet-ml</code> with safe preprocessing and fallbacks.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Nutrition Dashboard</h3>
+                    <p>Clear daily targets for calories, protein, carbs, and fats with animated cards and Chart.js visualizations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Reliable API</h3>
+                    <p>CORS-enabled Flask endpoints with robust validation and error handling to keep the app responsive.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖨️</div>
+                    <h3>PDF Report Export</h3>
+                    <p>Print-friendly report from the dashboard, including diet recommendation and explanation with black text for readability.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="content-section">
+            <h2>How It Works</h2>
+            <div class="steps-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Enter Your Information</h3>
+                        <p>Provide your age, gender, weight, height, body fat percentage, workout frequency, and fitness goal.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Get Your Predictions</h3>
+                        <p>The backend predicts your diet type using the ML model and returns it to the results page; the dashboard shows daily macronutrients with charts and offers a PDF export.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Track Your Progress</h3>
+                        <p>Use the interactive dashboard to monitor your daily nutrition requirements and plan your meals accordingly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculation Methods -->
+        <div class="content-section">
+            <h2>Calculation Methods</h2>
+            <div class="methods-grid">
+                <div class="method-card">
+                    <h3>BMR Calculation</h3>
+                    <p>We use the <strong>Mifflin-St Jeor Equation</strong> to calculate your Basal Metabolic Rate (BMR), which represents the number of calories your body needs at rest.</p>
+                    <div class="formula">
+                        <p><strong>Male:</strong> BMR = 10 × weight(kg) + 6.25 × height(cm) - 5 × age + 5</p>
+                        <p><strong>Female:</strong> BMR = 10 × weight(kg) + 6.25 × height(cm) - 5 × age - 161</p>
+                    </div>
+                </div>
+                <div class="method-card">
+                    <h3>TDEE Calculation</h3>
+                    <p>Total Daily Energy Expenditure (TDEE) is calculated by multiplying your BMR by an activity multiplier based on your workout frequency:</p>
+                    <ul class="method-list">
+                        <li>0-1 days/week: 1.2 (Sedentary)</li>
+                        <li>2-3 days/week: 1.375 (Light exercise)</li>
+                        <li>4-5 days/week: 1.55 (Moderate exercise)</li>
+                        <li>6-7 days/week: 1.65 (Heavy exercise)</li>
+                    </ul>
+                </div>
+                <div class="method-card">
+                    <h3>Goal Adjustments</h3>
+                    <p>TDEE is adjusted based on your fitness goal:</p>
+                    <ul class="method-list">
+                        <li><strong>Weight Loss:</strong> 15% calorie deficit</li>
+                        <li><strong>Muscle Gain:</strong> 15% calorie surplus</li>
+                        <li><strong>Maintain:</strong> No adjustment</li>
+                    </ul>
+                </div>
+                <div class="method-card">
+                    <h3>Macronutrient Distribution</h3>
+                    <p>Macronutrients are calculated based on your goal:</p>
+                    <ul class="method-list">
+                        <li><strong>Protein:</strong> 1.6-2.0 g/kg (varies by goal)</li>
+                        <li><strong>Fats:</strong> 25-30% of total calories</li>
+                        <li><strong>Carbs:</strong> Remaining calories after protein and fats</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technology Stack -->
+        <div class="content-section">
+            <h2>Technology Stack</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <h3>Frontend</h3>
+                    <p>HTML5, CSS</p>
+                </div>
+                <div class="tech-item">
+                    <h3>Backend</h3>
+                    <p>Python, Flask, CORS</p>
+                </div>
+                <div class="tech-item">
+                    <h3>Features</h3>
+                    <p>ML Diet Prediction, Nutrition Dashboard, Charts, PDF Export, Robust Error Handling</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="content-section disclaimer">
+            <h2>Important Disclaimer</h2>
+            <p>
+                The information provided by AI Fitness Trainer is for educational and informational purposes only. 
+                The calculations and recommendations are based on general formulas and should not replace professional 
+                medical advice, diagnosis, or treatment. Always consult with a healthcare provider or registered 
+                dietitian before making significant changes to your diet or exercise routine, especially if you have 
+                any medical conditions or concerns.
+            </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="inputs.html" class="btn-primary">Get Started</a>
+            <a href="homePage.html" class="btn-secondary">Back to Home</a>
+        </div>
+    </section>
+
+</body>
+</html>
+

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Dashboard - AI Fitness Trainer</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar">
+    <div class="logo-container">
+        <img src="../images/logo.png" alt="Neuro Fit AI Trainer Logo" class="logo-img">
+        <div class="logo-text">NEURO FIT AI TRAINER</div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="homePage.html">Home</a></li>
+        <li><a href="inputs.html" class="active">Start</a></li>
+        <li><a href="about.html">About</a></li>
+    </ul>
+
+    
+</nav>
+
+<div class="print-header" style="display:none">
+    <img src="../images/logo.png" alt="Neuro Fit AI Trainer Logo" class="print-logo">
+    <div class="print-title">Nutrition Dashboard Report</div>
+    <div class="print-meta">Generated on <span id="printDate"></span></div>
+</div>
+
+    <!-- Dashboard Container -->
+    <section class="dashboard-container">
+        <h1>Nutrition Dashboard</h1>
+        <p class="subtitle">Your personalized nutrition breakdown</p>
+
+        <!-- User Info Summary -->
+        <div class="user-summary" id="userSummary">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <!-- Diet Recommendation -->
+        <div class="diet-summary">
+            <h2>Diet Recommendation</h2>
+            <div class="diet-type-text" id="dietTypeText">Loading...</div>
+            <p class="diet-explanation" id="dietExplanation"></p>
+        </div>
+
+        <!-- Daily Nutrition Cards -->
+        <div class="nutrition-grid">
+            <!-- Calories Card -->
+            <div class="nutrition-card calories">
+                <div class="card-header">
+                    <h3>Calories</h3>
+                    <span class="card-icon">🔥</span>
+                </div>
+                <div class="card-value" id="caloriesValue">0</div>
+                <div class="card-unit">kcal/day</div>
+                <div class="card-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="caloriesProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protein Card -->
+            <div class="nutrition-card protein">
+                <div class="card-header">
+                    <h3>Protein</h3>
+                    <span class="card-icon">💪</span>
+                </div>
+                <div class="card-value" id="proteinValue">0</div>
+                <div class="card-unit">grams/day</div>
+                <div class="card-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="proteinProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carbs Card -->
+            <div class="nutrition-card carbs">
+                <div class="card-header">
+                    <h3>Carbohydrates</h3>
+                    <span class="card-icon">🌾</span>
+                </div>
+                <div class="card-value" id="carbsValue">0</div>
+                <div class="card-unit">grams/day</div>
+                <div class="card-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="carbsProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fats Card -->
+            <div class="nutrition-card fats">
+                <div class="card-header">
+                    <h3>Fats</h3>
+                    <span class="card-icon">🥑</span>
+                </div>
+                <div class="card-value" id="fatsValue">0</div>
+                <div class="card-unit">grams/day</div>
+                <div class="card-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="fatsProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <h2>Macronutrient Distribution</h2>
+                <div class="chart-wrapper">
+                    <canvas id="macronutrientChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h2>Calorie Breakdown</h2>
+                <div class="chart-wrapper">
+                    <canvas id="calorieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button type="button" class="btn-secondary" onclick="downloadPDF()">Download PDF Report</button>
+            <a href="inputs.html" class="btn-secondary">Update Information</a>
+            <a href="homePage.html" class="btn-primary">Back to Home</a>
+        </div>
+    </section>
+
+    <script>
+
+        let userData = null;
+        let dailyNutrients = null;
+
+        // Load user data from sessionStorage
+        function loadUserData() {
+            const stored = sessionStorage.getItem('fitnessFormData');
+            if (!stored) {
+                alert('No user data found. Please fill out the form first.');
+                window.location.href = 'inputs.html';
+                return;
+            }
+            userData = JSON.parse(stored);
+            displayUserSummary();
+            calculateNutrients(); // This now calls the backend API
+            loadDietType();
+        }
+
+        // Display user summary
+        function displayUserSummary() {
+            const summary = document.getElementById('userSummary');
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Age:</span>
+                    <span class="summary-value">${userData.age} years</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Gender:</span>
+                    <span class="summary-value">${userData.gender}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Weight:</span>
+                    <span class="summary-value">${userData.weight} kg</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Goal:</span>
+                    <span class="summary-value">${userData.goalLabel}</span>
+                </div>
+            `;
+        }
+
+        // Calculate daily nutrients using backend API
+        async function calculateNutrients() {
+            try {
+                // Show loading state
+                document.getElementById('caloriesValue').textContent = '...';
+                document.getElementById('proteinValue').textContent = '...';
+                document.getElementById('carbsValue').textContent = '...';
+                document.getElementById('fatsValue').textContent = '...';
+
+                // API endpoint (update this to match your backend URL)
+                const API_URL = 'http://localhost:5000/api/calculate-nutrients';
+                
+                // Send request to backend
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const nutrients = result.data.daily_nutrients;
+                    dailyNutrients = {
+                        calories: nutrients.calories,
+                        protein: nutrients.protein,
+                        carbs: nutrients.carbs,
+                        fats: nutrients.fats,
+                        bmr: result.data.bmr,
+                        tdee: result.data.tdee,
+                        adjusted_tdee: result.data.adjusted_tdee
+                    };
+                    updateDisplay();
+                    createCharts();
+                } else {
+                    throw new Error(result.error || 'Failed to calculate nutrients');
+                }
+            } catch (error) {
+                console.error('Error calculating nutrients:', error);
+                // Fallback to client-side calculation if API fails
+                calculateNutrientsFallback();
+            }
+        }
+
+        // Fallback calculation (client-side) if API is unavailable
+        // Updated to match backend calculation logic
+        function calculateNutrientsFallback() {
+            const { age, gender, weight, height, goalLabel, workoutFrequency, bmi } = userData;
+            
+            // Calculate BMR (Basal Metabolic Rate) using Mifflin-St Jeor Equation
+            let bmr;
+            if (gender === 'Male') {
+                bmr = 10 * weight + 6.25 * (height * 100) - 5 * age + 5;
+            } else {
+                bmr = 10 * weight + 6.25 * (height * 100) - 5 * age - 161;
+            }
+
+            // Calculate TDEE (Total Daily Energy Expenditure) based on activity level
+            // Updated activity multipliers by workout frequency ranges:
+            // 0-1 days: 1.2, 2-3 days: 1.375, 4-5 days: 1.55, 6-7 days: 1.65
+            let multiplier;
+            if (workoutFrequency <= 1) {
+                multiplier = 1.2;      // 0-1 days: Sedentary
+            } else if (workoutFrequency <= 3) {
+                multiplier = 1.375;    // 2-3 days: Light exercise
+            } else if (workoutFrequency <= 5) {
+                multiplier = 1.55;     // 4-5 days: Moderate exercise
+            } else {  // 6-7 days
+                multiplier = 1.65;     // 6-7 days: Heavy exercise
+            }
+            let tdee = bmr * multiplier;
+
+            // Adjust TDEE based on goal
+            if (goalLabel === 'Weight Loss') {
+                tdee = tdee * 0.85; // 15% deficit
+            } else if (goalLabel === 'Muscle Gain') {
+                tdee = tdee * 1.15; // 15% surplus
+            }
+
+            // Calculate macronutrients based on goal
+            // Updated protein factors: Weight Loss: 1.8 g/kg, Muscle Gain: 2.0 g/kg, Maintain: 1.6 g/kg
+            // Updated fat percentage for Weight Loss: 25% (changed from 30%)
+            let protein, carbs, fats;
+            
+            if (goalLabel === 'Muscle Gain') {
+                // Updated: 2.0g per kg body weight (changed from 2.2g)
+                protein = weight * 2.0;
+                fats = (tdee * 0.25) / 9; // 25% of calories from fats
+                carbs = (tdee - (protein * 4) - (fats * 9)) / 4;
+            } else if (goalLabel === 'Weight Loss') {
+                // Updated: 1.8g per kg body weight (changed from 2.0g)
+                protein = weight * 1.8;
+                // Updated: 25% of calories from fats (changed from 30%)
+                fats = (tdee * 0.25) / 9;
+                carbs = (tdee - (protein * 4) - (fats * 9)) / 4;
+            } else {
+                // Maintain: 1.6g per kg body weight (unchanged)
+                protein = weight * 1.6;
+                fats = (tdee * 0.30) / 9; // 30% of calories from fats
+                carbs = (tdee - (protein * 4) - (fats * 9)) / 4;
+            }
+
+            dailyNutrients = {
+                calories: Math.round(tdee),
+                protein: Math.round(protein),
+                carbs: Math.round(carbs),
+                fats: Math.round(fats),
+                bmr: Math.round(bmr),
+                tdee: Math.round(tdee)
+            };
+            updateDisplay();
+            createCharts();
+        }
+
+        // Create and update charts
+        let macronutrientChart = null;
+        let calorieChart = null;
+
+        function createCharts() {
+            if (!dailyNutrients) return;
+
+            // Destroy existing charts if they exist
+            if (macronutrientChart) {
+                macronutrientChart.destroy();
+            }
+            if (calorieChart) {
+                calorieChart.destroy();
+            }
+
+            // Macronutrient Distribution Chart (Doughnut)
+            const macroCtx = document.getElementById('macronutrientChart').getContext('2d');
+            macronutrientChart = new Chart(macroCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Protein', 'Carbohydrates', 'Fats'],
+                    datasets: [{
+                        data: [
+                            dailyNutrients.protein * 4,
+                            dailyNutrients.carbs * 4,
+                            dailyNutrients.fats * 9
+                        ],
+                        backgroundColor: [
+                            'rgba(78, 205, 196, 0.8)',
+                            'rgba(255, 230, 109, 0.8)',
+                            'rgba(149, 225, 211, 0.8)'
+                        ],
+                        borderColor: [
+                            '#4ecdc4',
+                            '#ffe66d',
+                            '#95e1d3'
+                        ],
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#00ff9d',
+                            bodyColor: '#ffffff',
+                            borderColor: '#00ff9d',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    const grams = value / (label === 'Fats' ? 9 : 4);
+                                    return `${label}: ${grams.toFixed(0)}g (${percentage}%)`;
+                                }
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                }
+            });
+
+            // Calorie Breakdown Chart (Bar)
+            const calorieCtx = document.getElementById('calorieChart').getContext('2d');
+            calorieChart = new Chart(calorieCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Protein', 'Carbohydrates', 'Fats'],
+                    datasets: [{
+                        label: 'Calories',
+                        data: [
+                            dailyNutrients.protein * 4,
+                            dailyNutrients.carbs * 4,
+                            dailyNutrients.fats * 9
+                        ],
+                        backgroundColor: [
+                            'rgba(78, 205, 196, 0.8)',
+                            'rgba(255, 230, 109, 0.8)',
+                            'rgba(149, 225, 211, 0.8)'
+                        ],
+                        borderColor: [
+                            '#4ecdc4',
+                            '#ffe66d',
+                            '#95e1d3'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#00ff9d',
+                            bodyColor: '#ffffff',
+                            borderColor: '#00ff9d',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const total = dailyNutrients.calories;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${value} kcal (${percentage}%)`;
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#aaaaaa',
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return value + ' kcal';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update display with current day's nutrients
+        function updateDisplay() {
+            if (!dailyNutrients) return;
+
+
+
+            // Update nutrition values
+            document.getElementById('caloriesValue').textContent = dailyNutrients.calories.toLocaleString();
+            document.getElementById('proteinValue').textContent = dailyNutrients.protein.toLocaleString();
+            document.getElementById('carbsValue').textContent = dailyNutrients.carbs.toLocaleString();
+            document.getElementById('fatsValue').textContent = dailyNutrients.fats.toLocaleString();
+
+            // Animate progress bars
+            setTimeout(() => {
+                document.getElementById('caloriesProgress').style.width = '100%';
+                document.getElementById('proteinProgress').style.width = '100%';
+                document.getElementById('carbsProgress').style.width = '100%';
+                document.getElementById('fatsProgress').style.width = '100%';
+            }, 100);
+        }
+
+
+
+        const dietDescriptions = {
+            'Balanced': 'A balanced diet with appropriate proportions of carbs, protein, and healthy fats to support overall wellbeing.',
+            'High-Protein': 'Higher protein intake to support muscle growth, recovery, and satiety with moderate carbs and fats.',
+            'Low-Carb': 'Reduced carbohydrate intake emphasizing protein and healthy fats to aid fat loss and metabolic efficiency.'
+        };
+        function renderDietSummary(dietType) {
+            const typeEl = document.getElementById('dietTypeText');
+            const expEl = document.getElementById('dietExplanation');
+            typeEl.textContent = dietType;
+            expEl.textContent = dietDescriptions[dietType] || dietDescriptions['Balanced'];
+        }
+        function predictDietTypeFallback(data) {
+            const goal = data.goalLabel;
+            const workoutFreq = Number(data.workoutFrequency || 0);
+            const bmi = Number(data.bmi || 0);
+            if (goal === 'Muscle Gain' || workoutFreq >= 4) return 'High-Protein';
+            if (goal === 'Weight Loss' || (bmi > 25 && bmi < 30)) return 'Low-Carb';
+            return 'Balanced';
+        }
+        async function loadDietType() {
+            try {
+                const API_URL = 'http://localhost:5000/api/predict-diet-ml';
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                if (result.success && result.dietType) {
+                    renderDietSummary(result.dietType);
+                } else {
+                    renderDietSummary(predictDietTypeFallback(userData));
+                }
+            } catch (e) {
+                renderDietSummary(predictDietTypeFallback(userData));
+            }
+        }
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', loadUserData);
+
+        // Back button function
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'homePage.html';
+            }
+        }
+        function downloadPDF() {
+            window.print();
+        }
+        function applyPrintThemeToCharts() {
+            try {
+                Chart.defaults.color = '#000000';
+                Chart.defaults.font.size = 14;
+                if (macronutrientChart) {
+                    macronutrientChart.options.plugins.legend.labels.color = '#000000';
+                    macronutrientChart.options.plugins.legend.labels.font = { size: 14 };
+                    macronutrientChart.options.animation = false;
+                    macronutrientChart.update();
+                }
+                if (calorieChart) {
+                    calorieChart.options.plugins.legend.display = false;
+                    calorieChart.options.scales.x.ticks.color = '#000000';
+                    calorieChart.options.scales.x.ticks.font = { size: 14 };
+                    calorieChart.options.scales.y.ticks.color = '#000000';
+                    calorieChart.options.scales.y.ticks.font = { size: 14 };
+                    calorieChart.options.animation = false;
+                    calorieChart.update();
+                }
+            } catch (e) {}
+        }
+        function restoreScreenThemeToCharts() {
+            try {
+                Chart.defaults.color = '#ffffff';
+                Chart.defaults.font.size = 12;
+                if (macronutrientChart) {
+                    macronutrientChart.options.plugins.legend.labels.color = '#ffffff';
+                    macronutrientChart.options.animation = true;
+                    macronutrientChart.update();
+                }
+                if (calorieChart) {
+                    calorieChart.options.plugins.legend.display = false;
+                    calorieChart.options.scales.x.ticks.color = '#ffffff';
+                    calorieChart.options.scales.y.ticks.color = '#aaaaaa';
+                    calorieChart.options.animation = true;
+                    calorieChart.update();
+                }
+            } catch (e) {}
+        }
+        function updatePrintHeader(){
+            const el = document.getElementById('printDate');
+            if (el) {
+                const d = new Date();
+                el.textContent = d.toLocaleString();
+            }
+        }
+        window.addEventListener('beforeprint', function(){
+            updatePrintHeader();
+            applyPrintThemeToCharts();
+        });
+        window.addEventListener('afterprint', restoreScreenThemeToCharts);
+    </script>
+
+</body>
+</html>
+
